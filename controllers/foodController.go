@@ -38,17 +38,19 @@ func GetFoods() gin.HandlerFunc{
 		matchStage := bson.D{{"$match",bson.D{{}}}}
 		groupStage := bson.D{
 			{"$group", bson.D{
-				{"_id", nil},
-				{"total_count", bson.D{{"$sum", 1}}},
+				{Key: "_id", Value: nil},
+				{Key: "total_count", Value: bson.D{{Key: "$sum", Value: 1}}},
 			}},
 		}
 		projectStage := bson.D{
 			{
-				"$project", bson.D{
-					{"_id",0},
-					{"total_count",1},
-					{"food_items", bson.D{{"$slice", []interface{}{"$state", startIdx, recordPerPage}}}}
-				}
+				{"$project", bson.D{
+					{Key: "_id", Value: 0},
+					{Key: "total_count", Value: 1},
+					{Key: "food_items", Value: bson.D{
+						{Key: "$slice", Value: []interface{}{"$state", startIdx, recordPerPage}},
+					}},
+				}},
 			}
 		}
 		result,err:=foodCollection.Aggregate(ctx, mongo.Pipeline{
@@ -153,7 +155,7 @@ func UpdateFood() gin.HandlerFunc{
 			defer cancel()
 			if err!=nil{
 				msg:=fmt.Sprintf("messgar:Menu was not found")
-				c.JSON(http.StatusInternalServerError, gin.H{"error:msg"})
+				c.JSON(http.StatusInternalServerError, gin.H{"error":msg})
 			}
 			updateObj=append(updateObj, bson.E{"menu",food.Price})
 		}
