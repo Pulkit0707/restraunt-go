@@ -35,7 +35,7 @@ func GetOrders() gin.HandlerFunc{
 		if err = result.All(ctx,&allOrders); err!=nil{
 			log.Fatal(err)
 		}
-		c.JSON(http.StatusOk,allOrders[0])
+		c.JSON(http.StatusOK,allOrders)
 	}
 }
 
