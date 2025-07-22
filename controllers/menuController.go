@@ -25,10 +25,12 @@ func GetMenus() gin.HandlerFunc{
 		defer cancel()
 		if err!=nil{
 			c.JSON(http.StatusInternalServerError, gin.H{"error":"error occured while lisiting the menu items"})
+			return
 		}
 		var allMenus []bson.M
 		if err = result.All(ctx, &allMenus); err!=nil{
 			log.Fatal(err)
+			return
 		}
 		c.JSON(http.StatusOK, allMenus)
 	}
@@ -43,6 +45,7 @@ func GetMenu() gin.HandlerFunc{
 		defer cancel()
 		if err!=nil{
 			c.JSON(http.StatusInternalServerError, gin.H{"error":"error while fetching menu"})
+			return
 		}
 		c.JSON(http.StatusOK,menu)
 	}

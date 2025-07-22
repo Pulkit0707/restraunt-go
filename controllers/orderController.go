@@ -30,10 +30,12 @@ func GetOrders() gin.HandlerFunc{
 		defer cancel()
 		if err!=nil{
 			c.JSON(http.StatusInternalServerError, gin.H{"error":"error occured while listing order items"})
+			return
 		}
 		var allOrders []bson.M
 		if err = result.All(ctx,&allOrders); err!=nil{
 			log.Fatal(err)
+			return
 		}
 		c.JSON(http.StatusOK,allOrders)
 	}
@@ -48,6 +50,7 @@ func GetOrder() gin.HandlerFunc{
 		defer cancel()
 		if err!=nil{
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "error occured while fetching the order"})
+			return
 		}
 		c.JSON(http.StatusOK,order)
 	}
@@ -109,6 +112,7 @@ func UpdateOrder() gin.HandlerFunc{
 			if err!=nil{
 				msg := fmt.Sprintf("Message:Table was not found")
 				c.JSON(http.StatusInternalServerError, gin.H{"error":msg})
+				return
 			}
 			updateObj=append(updateObj, bson.E{"table",order.Table_id})
 		}
@@ -130,6 +134,7 @@ func UpdateOrder() gin.HandlerFunc{
 		if err!=nil{
 			msg:="Order update failed"
 			c.JSON(http.StatusInternalServerError,gin.H{"error":msg})
+			return
 		}
 		defer cancel()
 		c.JSON(http.StatusOK, result)

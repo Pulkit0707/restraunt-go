@@ -40,10 +40,12 @@ func GetInvoices() gin.HandlerFunc{
 		defer cancel()
 		if err!=nil{
 			c.JSON(http.StatusInternalServerError, gin.H{"error":"error occured while listing invoices"})
+			return
 		}
 		var allInvoices []bson.M
 		if err = result.All(ctx,&allInvoices); err!=nil{
 			log.Fatal(err)
+			return
 		}
 		c.JSON(http.StatusOK,allInvoices)
 	}
@@ -58,6 +60,7 @@ func GetInvoice() gin.HandlerFunc{
 		defer cancel()
 		if err!=nil{
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "error occured while fetching the invoice"})
+			return
 		}
 		var invoiceView InvoiceViewFormat
 		allOrderItems, err := ItemsByOrder(invoice.Order_id)
@@ -164,6 +167,7 @@ func UpdateInvoice() gin.HandlerFunc{
 		if err!=nil{
 			msg:="Invoice update failed"
 			c.JSON(http.StatusInternalServerError,gin.H{"error":msg})
+			return
 		}
 		defer cancel()
 		c.JSON(http.StatusOK, result)

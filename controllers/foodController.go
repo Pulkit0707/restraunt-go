@@ -77,6 +77,7 @@ func GetFood() gin.HandlerFunc{
 		defer cancel()
 		if err!=nil{
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "error occured while fetching the food item"})
+			return
 		}
 		c.JSON(http.StatusOK,food)
 	}
@@ -156,6 +157,7 @@ func UpdateFood() gin.HandlerFunc{
 			if err!=nil{
 				msg:=fmt.Sprintf("messgar:Menu was not found")
 				c.JSON(http.StatusInternalServerError, gin.H{"error":msg})
+				return
 			}
 			updateObj=append(updateObj, bson.E{"menu",food.Price})
 		}
@@ -177,6 +179,7 @@ func UpdateFood() gin.HandlerFunc{
 		if err!=nil{
 			msg:="Food update failed"
 			c.JSON(http.StatusInternalServerError,gin.H{"error":msg})
+			return
 		}
 		defer cancel()
 		c.JSON(http.StatusOK, result)
