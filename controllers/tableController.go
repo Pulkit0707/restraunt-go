@@ -22,7 +22,19 @@ var tableCollection *mongo.Collection = database.OpenCollection(database.Client,
 
 func GetTables() gin.HandlerFunc{
 	return func(c *gin.Context) {
-
+		var ctx, cancel = context.WithTimeout(context.Background(), 100*time.Second)
+		result, err:=tableCollection.Find(context.TODO(), bson.M{})
+		defer cancel()
+		if err!=nil{
+			c.JSON(http.StatusInternalServerError, gin.H{"error":"error occured while listing tables"})
+			return
+		}
+		var allTables []bson.M
+		if err = result.All(ctx,&allTables); err!=nil{
+			log.Fatal(err)
+			return
+		}
+		c.JSON(http.StatusOK,allTables)
 	}
 }
 
@@ -31,7 +43,7 @@ func GetTable() gin.HandlerFunc{
 		var ctx,cancel = context.WithTimeout(context.Background(), 100*time.Second)
 		tableId:=c.Param("table_id")
 		var table models.Table
-		err:=foodCollection.FindOne(ctx, bson.M{"food_id": tableId}).Decode(&table)
+		err:=tableCollection.FindOne(ctx, bson.M{"food_id": tableId}).Decode(&table)
 		defer cancel()
 		if err!=nil{
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "error occured while fetching the table"})
