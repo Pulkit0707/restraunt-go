@@ -16,6 +16,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 var tableCollection *mongo.Collection = database.OpenCollection(database.Client, "table")
@@ -86,23 +87,23 @@ func UpdateTable() gin.HandlerFunc{
 		var ctx, cancel = context.WithTimeout(context.Background(),100*time.Second)
 		var table models.Table
 		tableId:=c.Param("table_id")
-		if err := c.BindJSON(&food); err!=nil{
+		if err := c.BindJSON(&table); err!=nil{
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
 		}
 		var updateObj primitive.D
 		if table.Number_of_guests!=nil{
-			updateObj=append(updateObj, bson.E{"number_of_guests":table.Number_of_guests})
+			updateObj=append(updateObj, bson.E{Key:"number_of_guests",Value: table.Number_of_guests})
 		}
 		if table.Table_Number!=nil{
-			updateObj=append(updateObj, bson.E{"table_number":table.Table_Number})
+			updateObj=append(updateObj, bson.E{Key:"table_number",Value:table.Table_Number})
 		}
 		table.Updated_at,_=time.Parse(time.RFC3339, time.Now().Format(time.RFC3339))
-		updateObj = append(updateObj, json.E{"updated_at", table.Updated_at})
+		updateObj = append(updateObj, bson.E{"updated_at", table.Updated_at})
 		upsert:=true
 		filter:=bson.M{"table_id":tableId}
 		opt := options.UpdateOptions{
-			Upsert: &upsert
+			Upsert: &upsert,
 		}
 		result,err:=tableCollection.UpdateOne(
 			ctx,

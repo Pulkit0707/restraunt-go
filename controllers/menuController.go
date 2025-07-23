@@ -21,7 +21,7 @@ var menuCollection *mongo.Collection = database.OpenCollection(database.Client, 
 func GetMenus() gin.HandlerFunc{
 	return func(c *gin.Context) {
 		var ctx, cancel = context.WithTimeout(context.Background(), 100*time.Second)
-		result, err ;= menuCollection.Find(context.TODO(), bson.M{})
+		result, err := menuCollection.Find(context.TODO(), bson.M{})
 		defer cancel()
 		if err!=nil{
 			c.JSON(http.StatusInternalServerError, gin.H{"error":"error occured while lisiting the menu items"})
@@ -68,7 +68,7 @@ func CreateMenu() gin.HandlerFunc{
 		menu.Updated_at,_ = time.Parse(time.RFC3339, time.Now().Format(time.RFC3339))
 		menu.ID = primitive.NewObjectID()
 		menu_id := menu.ID.Hex()
-		menu.Menu_id = &menu_id
+		menu.Menu_id = menu_id
 		result, insertErr := menuCollection.InsertOne(ctx,menu)
 		if insertErr!=nil{
 			msg := fmt.Sprintf("Menu was not created")
@@ -94,7 +94,7 @@ func UpdateMenu() gin.HandlerFunc{
 			return
 		}
 		menuId := c.Param("menu_id")
-		filter := bson.M("menu_id":menuId)
+		filter := bson.M{"menu_id": menuId}
 		var updateObj primitive.D
 		if menu.Start_date != nil && menu.End_date!=nil{
 			if !inTimeSpan(*menu.Start_date,*menu.End_date,time.Now()){
@@ -112,10 +112,10 @@ func UpdateMenu() gin.HandlerFunc{
 				updateObj = append(updateObj, bson.E{"category",menu.Category})
 			}
 			menu.Updated_at,_ = time.Parse(time.RFC3339, time.Now().Format(time.RFC3339))
-			updateObj = append(updateObj, json.E{"updated_at", menu.Updated_at})
+			updateObj = append(updateObj, bson.E{"updated_at", menu.Updated_at})
 			upsert := true
 			opt := options.UpdateOptions{
-				Upsert: &upsert
+				Upsert: &upsert,
 			}
 			result,err:=menuCollection.UpdateOne(
 				ctx,

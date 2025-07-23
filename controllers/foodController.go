@@ -16,6 +16,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 var foodCollection *mongo.Collection = database.OpenCollection(database.Client, "food")
@@ -43,18 +44,16 @@ func GetFoods() gin.HandlerFunc{
 			}},
 		}
 		projectStage := bson.D{
-			{
-				{"$project", bson.D{
-					{Key: "_id", Value: 0},
-					{Key: "total_count", Value: 1},
-					{Key: "food_items", Value: bson.D{
-						{Key: "$slice", Value: []interface{}{"$state", startIdx, recordPerPage}},
-					}},
+			{Key: "$project", Value: bson.D{
+				{Key: "_id", Value: 0},
+				{Key: "total_count", Value: 1},
+				{Key: "food_items", Value: bson.D{
+					{Key: "$slice", Value: []interface{}{"$food_items", startIdx, recordPerPage}},
 				}},
-			}
+			}},
 		}
 		result,err:=foodCollection.Aggregate(ctx, mongo.Pipeline{
-			matchStage, groupStage, projectStage
+			matchStage, groupStage, projectStage,
 		})
 		defer cancel()
 		if err!=nil{
@@ -64,7 +63,7 @@ func GetFoods() gin.HandlerFunc{
 		if err = result.All(ctx,&allFoods); err!=nil{
 			log.Fatal(err)
 		}
-		c.JSON(http.StatusOk,allFoods[0])
+		c.JSON(http.StatusOK,allFoods[0])
 	}
 }
 
@@ -143,13 +142,13 @@ func UpdateFood() gin.HandlerFunc{
 		}
 		var updateObj primitive.D
 		if food.Name!=nil{
-			updateObj=append(updateObj, bson.E{"name":food.Name})
+			updateObj=append(updateObj, bson.E{Key: "name", Value: food.Name})
 		}
 		if food.Price!=nil{
-			updateObj=append(updateObj, bson.E{"price":food.Price})
+			updateObj=append(updateObj, bson.E{Key: "price", Value: food.Price})
 		}
 		if food.Food_image!=nil{
-			updateObj=append(updateObj, bson.E{"food_image":food.Food_image})
+			updateObj=append(updateObj, bson.E{Key: "food_image", Value: food.Food_image})
 		}
 		if food.Menu_id!=nil{
 			err:= menuCollection.FindOne(ctx, bson.M{"menu_id":food.Menu_id}).Decode(&menu)
@@ -162,11 +161,11 @@ func UpdateFood() gin.HandlerFunc{
 			updateObj=append(updateObj, bson.E{"menu",food.Price})
 		}
 		food.Updated_at,_=time.Parse(time.RFC3339, time.Now().Format(time.RFC3339))
-		updateObj = append(updateObj, json.E{"updated_at", food.Updated_at})
+		updateObj = append(updateObj, bson.E{"updated_at", food.Updated_at})
 		upsert:=true
 		filter:=bson.M{"food_id":foodId}
 		opt := options.UpdateOptions{
-			Upsert: &upsert
+			Upsert: &upsert,
 		}
 		result,err:=foodCollection.UpdateOne(
 			ctx,

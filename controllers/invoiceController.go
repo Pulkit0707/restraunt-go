@@ -16,6 +16,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 type InvoiceViewFormat struct{
@@ -133,24 +134,25 @@ func UpdateInvoice() gin.HandlerFunc{
 		var updateObj primitive.D
 		filter:=bson.M{"invoice_id":invoiceId}
 		if invoice.Payment_method!=nil{
-			updateObj = append(updateObj, bson.E{"payment_method":invoice.Payment_method})
+			updateObj = append(updateObj, bson.E{Key:"payment_method",Value: invoice.Payment_method})
 		}
 		if invoice.Payment_status!=nil{
-			updateObj = append(updateObj, bson.E{"payment_status": invoice.Payment_status})
+			updateObj = append(updateObj, bson.E{Key:"payment_status",Value: invoice.Payment_status})
 		}
-		if invoice.Order_id!=nil{
-			err:= orderCollection.FindOne(ctx, bson.M{"order_id":invoice.Order_id}).Decode(&order)
+		if invoice.Order_id != "" {
+			var order models.Order
+			err := orderCollection.FindOne(ctx, bson.M{"order_id": invoice.Order_id}).Decode(&order)
 			defer cancel()
-			if err!=nil{
-				msg:=fmt.Sprintf("Order was not found")
-				c.JSON(http.StatusInternalServerError, gin.H{"error":msg})
+			if err != nil {
+				msg := fmt.Sprintf("Order was not found")
+				c.JSON(http.StatusInternalServerError, gin.H{"error": msg})
 			}
 		}
 		invoice.Updated_at,_=time.Parse(time.RFC3339, time.Now().Format(time.RFC3339))
-		updateObj = append(updateObj, json.E{"updated_at", invoice.Updated_at})
+		updateObj = append(updateObj, bson.E{"updated_at", invoice.Updated_at})
 		upsert:=true
 		opt := options.UpdateOptions{
-			Upsert: &upsert
+			Upsert: &upsert,
 		}
 		status := "PENDING"
 		if invoice.Payment_status==nil{
